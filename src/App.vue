@@ -60,7 +60,11 @@ const copyToClipboard = async () => {
 
 <template>
   <div class="app-container">
-    <h1>日程調整用 テンプレート作成</h1>
+    <h1>Schedule-Poll</h1>
+
+    <p>
+      BOT_SimplePoll を用いて日程調整などのアンケートをするためのテキストを生成します。
+    </p>
 
     <div class="section">
       <label>タイトル</label>
