@@ -180,9 +180,8 @@ const copyToClipboard = async () => {
 <template>
   <div class="app-container">
     <div v-if="!accessToken" class="login-screen">
-      <p>traQ スタンプを利用するにはログインが必要です</p>
       <button @click="login" class="login-btn">
-        traQ でログイン
+        <div class="btn-txt">traQ でログイン</div>
       </button>
     </div>
     <div v-else>
@@ -261,6 +260,17 @@ const copyToClipboard = async () => {
 label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
 
 .main-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+.login-screen { display: flex; width: 100%; justify-content: center;}
+.login-btn { width: 300px; height: 75px; margin: 0 auto; background: #ECA0AA; border-radius: 10px; transition: all 0.3s ease; }
+
+.btn-txt {
+  color: #000;
+  font-family: "Zen Maru Gothic";
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
 
 .pair-row {
   display: flex;
@@ -272,13 +282,13 @@ label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
 .stamp-input { width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
 .desc-input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
 
-.btn-add { background: #f0f0f0; border: 1px dashed #999; width: 100%; padding: 8px; cursor: pointer; border-radius: 4px; }
-.btn-remove { background: #be2152; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; line-height: 1; }
+.btn-add { background: #f0f0f0; border: 1px dashed #999; width: 100%; padding: 8px; cursor: pointer; border-radius: 4px; transition: all 0.3s ease; }
+.btn-remove { background: #be2152; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; line-height: 1; transition: all 0.3s ease; }
 
 .preview-section { margin-top: 2rem; border-top: 2px solid #eee; pt: 1rem; }
 .preview-area { background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 4px; white-space: pre-wrap; font-size: 0.9rem; }
 
-.btn-copy { width: 100%; padding: 12px; background: #cc213e; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+.btn-copy { width: 100%; padding: 12px; background: #cc213e; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 10px; transition: all 0.3s ease; }
 .btn-copy:active { opacity: 0.8; }
 
 /* ボタンが無効(disabled)の時のスタイル */
@@ -324,6 +334,25 @@ label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
   width: 32px;
   height: 32px;
   object-fit: contain;
+}
+
+/* マウスを乗せたとき (Hover) */
+.btn-add:hover, .btn-copy:hover, .login-btn:hover, .btn-remove:hover {
+  /* 1. 少しだけ大きくする */
+  transform: translateY(-2px) scale(1.01);
+  
+  /* 2. 影を少し強くして「浮いている感」を出す */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  
+  /* 3. 少しだけ明るくする（背景色に合わせて調整してください） */
+  filter: brightness(1.1);
+}
+
+/* クリックした瞬間 (Active) */
+.btn-add:active, .btn-copy:active, .login-btn:active, .btn-remove:active {
+  /* 押し込まれたような演出 */
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 480px) {
