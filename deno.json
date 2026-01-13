@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    "server": "deno run --allow-net --allow-read --allow-env --env server/main.ts"
+  },
+  "imports": {
+    "hono/": "https://deno.land/x/hono/"
+  }
+}

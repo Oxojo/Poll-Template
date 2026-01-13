@@ -1,13 +1,69 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, shallowRef } from 'vue'
 
+// setting
+const CLIENT_ID = 'I0p502TrI39lDCgH9xaC8D22Yo23swgvslJU'
+const REDIRECT_URL = window.location.origin
+const accessToken = ref(localStorage.getItem('traq_token') || null)
+
+// stamps
+const allStamps = shallowRef([])
+const activeIndex = ref(null)
+const suggestions = ref([])
+
+// questionnaire
 const title = ref('アンケート')
-// 初期値として2つほど項目を入れておく
 const pairs = ref([
   { stamp: 'yes', description: 'YES' },
   { stamp: 'no', description: 'NO' }
 ])
 
+// logic for authorization
+const login = () => {
+  const authURL = `https://q.trap.jp/api/v3/oauth2/authorize?response_type=code&client_id=${CLIENT_ID}`
+  window.location.href = authURL
+}
+const fetchStamps = async () => {
+  if (!accessToken.value) return
+  try {
+    const response = await fetch('heeps://q.trap.jp/api/v3/stamps', {
+      headers: {
+        'Authorization': `Bearer ${accessToken.value}`
+      }
+    })
+
+    if (response.status === 401) {
+      accessToken.value = null
+      localStorage.removeItem('traq_token')
+      return
+    }
+    const data = await response.json()
+    if (Array.isArray(data)) {
+      allStamps.value = data.map(s => ({ n : s.name, i : s.id }))
+    }
+  } catch (err) {
+    console.error('Auth error:', err)
+  }
+}
+onMounted(async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const code = urlParams.get('code')
+  if (code) {
+    const res = await fetch('/api/auth/callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    })
+
+    const data = await res.json()
+    if (data.access_token) {
+      accessToken.value = data.access_token
+      localStorage.setItem('traq_token', data.access_token)
+      window.history.replaceState({}, document.title, "/")
+      location.reload()
+    }
+  }
+})
 const isValid = computed(() => {
   // 1. タイトルが空（または空白のみ）でないか
   const isTitleValid = title.value.trim() !== ''
@@ -60,35 +116,43 @@ const copyToClipboard = async () => {
 
 <template>
   <div class="app-container">
-    <h1>Schedule-Poll</h1>
-
-    <p>
-      BOT_SimplePoll を用いて日程調整などのアンケートをするためのテキストを生成します。
-    </p>
-
-    <div class="section">
-      <label>タイトル</label>
-      <input v-model="title" placeholder="Title" class="main-input">
-    </div>
-
-    <div class="section">
-      <label>選択肢</label>
-      <div v-for="(item, index) in pairs" :key="index" class="pair-row">
-        <input v-model="item.stamp" placeholder="stamp name" class="stamp-input">
-        <input v-model="item.description" placeholder="description" class="desc-input">
-        <button @click="removePair(index)" class="btn-remove" title="削除">×</button>
-      </div>
-      <button @click="addPair" class="btn-add">+ 項目を追加</button>
-    </div>
-
-    <div class="preview-section">
-      <h3>プレビュー</h3>
-      <pre class="preview-area">{{ generatedText }}</pre>
-      <button @click="copyToClipboard" :disabled="!isValid" class="btn-copy">
-        {{ copyStatus }}
+    <div v-if="!accessToken" class="login-screen">
+      <p>traQ スタンプを利用するにはログインが必要です</p>
+      <button @click="login" class="login-btn">
+        traQ でログイン
       </button>
-      <p v-if="!isValid" class="hint">※ 全ての項目を入力する必要があります</p>
     </div>
+    <div v-else>
+      <h1>Schedule-Poll</h1>
+
+      <p>
+        BOT_SimplePoll を用いて日程調整などのアンケートをするためのテキストを生成します。
+      </p>
+
+      <div class="section">
+        <label>タイトル</label>
+        <input v-model="title" placeholder="Title" class="main-input">
+      </div>
+
+      <div class="section">
+        <label>選択肢</label>
+        <div v-for="(item, index) in pairs" :key="index" class="pair-row">
+          <input v-model="item.stamp" placeholder="stamp name" class="stamp-input">
+          <input v-model="item.description" placeholder="description" class="desc-input">
+          <button @click="removePair(index)" class="btn-remove" title="削除">×</button>
+        </div>
+        <button @click="addPair" class="btn-add">+ 項目を追加</button>
+      </div>
+
+      <div class="preview-section">
+        <h3>プレビュー</h3>
+        <pre class="preview-area">{{ generatedText }}</pre>
+        <button @click="copyToClipboard" :disabled="!isValid" class="btn-copy">
+          {{ copyStatus }}
+        </button>
+        <p v-if="!isValid" class="hint">※ 全ての項目を入力する必要があります</p>
+      </div>
+    </div>  
   </div>
 </template>
 
