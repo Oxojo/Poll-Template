@@ -5,7 +5,6 @@ ARG VITE_TRAQ_CLIENT_ID
 ENV VITE_TRAQ_CLIENT_ID=$VITE_TRAQ_CLIENT_ID
 COPY package*.json ./
 RUN npm install
-RUN npm install vue-router@4
 COPY . .
 # ビルド実行 (dist フォルダが生成される)
 RUN npm run build
