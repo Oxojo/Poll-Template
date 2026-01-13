@@ -1,6 +1,8 @@
 # --- ステージ 1: Vue のビルド (Node.js) ---
 FROM node:20-slim AS builder
 WORKDIR /app
+ARG VITE_TRAQ_CLIENT_ID
+ENV VITE_TRAQ_CLIENT_ID=$VITE_TRAQ_CLIENT_ID
 COPY package*.json ./
 RUN npm install
 COPY . .
