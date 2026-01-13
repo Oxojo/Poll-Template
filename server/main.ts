@@ -1,4 +1,5 @@
 import { Hono } from "https://deno.land/x/hono/mod.ts";
+import { serveStatic } from "https://deno.land/x/hono/middleware.ts";
 
 const app = new Hono();
 // server/main.ts
@@ -37,5 +38,9 @@ app.post("/api/auth/callback", async (c) => {
     return c.json({ error: "Internal Server Error", message: err.message }, 500);
   }
 });
+
+app.use("/*", serveStatic({ root: "./dist" }));
+
+app.get("*", serveStatic({ path: "./dist/index.html" }));
 
 Deno.serve(app.fetch);
