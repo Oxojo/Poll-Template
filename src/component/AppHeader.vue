@@ -5,7 +5,7 @@
                 <a href="https://poll-template.trap.show/">Schedule-Poll</a>
             </div>
             <div class="info">
-                <a href="https://poll-template.trap.show//info">
+                <a href="https://poll-template.trap.show/info">
                     <img src="../../info.png" alt="">
                 </a>
             </div>
