@@ -1,8 +1,13 @@
 {
   "tasks": {
-    "server": "deno run --allow-net --allow-read --allow-env --env server/main.ts"
+    "dev": "deno run --allow-net --allow-read --allow-env --env --watch server/main.ts",
+    "start": "deno run --allow-net --allow-read --allow-env server/main.ts"
   },
   "imports": {
-    "hono/": "https://deno.land/x/hono/"
+    "hono": "https://deno.land/x/hono@v4.0.0/mod.ts",
+    "hono/": "https://deno.land/x/hono@v4.0.0/"
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom"]
   }
 }

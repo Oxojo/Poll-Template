@@ -22,5 +22,11 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    // Deno 側で読み込むディレクトリ名と合わせる
+    outDir: 'dist',
+    // アセット（JS/CSS）のハッシュ化などを有効にする（デフォルトでOK）
+    emptyOutDir: true,
   }
 })
