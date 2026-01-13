@@ -2,10 +2,10 @@
     <div class="header">
         <div class="container">
             <div class="top">
-                <a href="https://poll-template.trap.show/">Schedule-Poll</a>
+                <a href="https://schedule-poll.trap.show/">Schedule-Poll</a>
             </div>
             <div class="info">
-                <a href="https://poll-template.trap.show/info">
+                <a href="https://schedule-poll.trap.show/info">
                     <img src="../../info.png" alt="">
                 </a>
             </div>
