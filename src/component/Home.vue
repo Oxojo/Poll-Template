@@ -133,6 +133,8 @@ const loadSuggestionImages = async (suggestionsList) => {
   })
   
   await Promise.all(promises)
+  // 画像読み込み完了後に suggestions を更新して Vue の反応性をトリガー
+  suggestions.value = [...suggestions.value]
 }
 
 // 検索ロジック：入力があるたびに実行
