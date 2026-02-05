@@ -79,10 +79,14 @@ onMounted(async () => {
       
       // 3. トークンが取れたら即座にフェッチ
       await fetchStamps()
+      // 初期ペアの画像をプリフェッチ
+      await prefetchPairImages()
     }
   } else if (accessToken.value) {
     // すでにトークンがある場合もフェッチする
     await fetchStamps()
+    // 初期ペアの画像をプリフェッチ
+    await prefetchPairImages()
   }
   window.addEventListener('click', handleClickOutside)
 })
@@ -135,6 +139,19 @@ const loadSuggestionImages = async (suggestionsList) => {
   await Promise.all(promises)
   // 画像読み込み完了後に suggestions を更新して Vue の反応性をトリガー
   suggestions.value = [...suggestions.value]
+}
+
+// ペアに設定された初期スタンプの画像をプリフェッチ
+const prefetchPairImages = async () => {
+  const promises = pairs.value.map(async (p) => {
+    if (p.stampId && !p.imageUrl) {
+      const url = await getStampImageUrl(p.stampId)
+      p.imageUrl = url
+    }
+  })
+
+  await Promise.all(promises)
+  pairs.value = [...pairs.value]
 }
 
 // 検索ロジック：入力があるたびに実行
