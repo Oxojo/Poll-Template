@@ -14,8 +14,8 @@ const suggestions = ref([])
 // questionnaire
 const title = ref('アンケート')
 const pairs = ref([
-  { stamp: 'yes', stampId: '', description: 'YES' },
-  { stamp: 'no', stampId: '', description: 'NO' }
+  { stamp: 'yes', stampId: '', description: 'YES', imageUrl: '' },
+  { stamp: 'no', stampId: '', description: 'NO', imageUrl: '' }
 ])
 
 // logic for authorization
@@ -91,8 +91,37 @@ onUnmounted(() => {
   window.removeEventListener('click', handleClickOutside)
 })
 
+// スタンプ画像キャッシュ
+const stampImageCache = ref({})
+
+// traQ APIから画像を取得してblob URLに変換
+const getStampImageUrl = async (stampId) => {
+  if (stampImageCache.value[stampId]) {
+    return stampImageCache.value[stampId]
+  }
+  
+  try {
+    const response = await fetch(`/api/stamps/${stampId}/image`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken.value}`
+      }
+    })
+    
+    if (response.ok) {
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      stampImageCache.value[stampId] = url
+      return url
+    }
+  } catch (err) {
+    console.error(`Failed to fetch stamp image for ${stampId}:`, err)
+  }
+  
+  return null
+}
+
 // 検索ロジック：入力があるたびに実行
-const handleInput = (query, index) => {
+const handleInput = async (query, index) => {
   activeIndex.value = index
   const q = (query || '').trim().toLowerCase()
   
@@ -110,6 +139,13 @@ const handleInput = (query, index) => {
       matches.push(data[i])
     }
   }
+  
+  // 各マッチ項目に対して画像URLを取得
+  for (const match of matches) {
+    const imageUrl = await getStampImageUrl(match.i)
+    match.imageUrl = imageUrl
+  }
+  
   suggestions.value = matches
 
   const exactMatch = data.find(s => s.n === q)
@@ -119,10 +155,14 @@ const handleInput = (query, index) => {
 }
 
 // スタンプを選択した時の処理
-const selectStamp = (index, s) => {
+const selectStamp = async (index, s) => {
   pairs.value[index].stamp = s.n
-  // 必要であれば ID も保存して画像表示に使う
-  pairs.value[index].stampId = s.i 
+  pairs.value[index].stampId = s.i
+  
+  // 画像URLを取得
+  const imageUrl = await getStampImageUrl(s.i)
+  pairs.value[index].imageUrl = imageUrl
+  
   suggestions.value = []
   activeIndex.value = null
 }
@@ -142,7 +182,7 @@ const isValid = computed(() => {
 
 // 2. 項目の追加・削除
 const addPair = () => {
-  pairs.value.push({ stamp: '', description: '' })
+  pairs.value.push({ stamp: '', description: '', stampId: '', imageUrl: '' })
 }
 
 const removePair = (index) => {
@@ -195,9 +235,9 @@ const copyToClipboard = async () => {
         <h2>選択肢</h2>
         <div v-for="(item, index) in pairs" :key="index" class="pair-row">
           <div class="stamp-preview">
-            <img v-if="item.stampId" 
-              :src="`https://q.trap.jp/api/v3/stamps/${item.stampId}/image`"
-              class="stamp-preview-icon" loading="lazy">
+            <img v-if="item.imageUrl" 
+              :src="item.imageUrl"
+              class="stamp-preview-icon">
             <span v-else class="no-stamp-preview"></span>
           </div>
           <div class="stamp-container">
@@ -220,7 +260,7 @@ const copyToClipboard = async () => {
                 class="suggestion-item"
                 @mousedown="selectStamp(index, s)"
               >
-                <img :src="`https://q.trap.jp/api/v3/stamps/${s.i}/image`" class="stamp-icon" loading="lazy">
+                <img v-if="s.imageUrl" :src="s.imageUrl" class="stamp-icon">
                 <span>{{ s.n }}</span>
               </div>
             </div>

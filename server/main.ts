@@ -27,7 +27,7 @@ app.post("/api/auth/callback", async (c) => {
     if (!response.ok) {
       const errorDetail = await response.text();
       console.error("traQ API Error:", errorDetail);
-      return c.json({ error: "traQ authentication failed", details: errorDetail }, response.status);
+      return c.json({ error: "traQ authentication failed", details: errorDetail }, response.status as any);
     }
 
     const tokenData = await response.json(); //
@@ -35,7 +35,44 @@ app.post("/api/auth/callback", async (c) => {
 
   } catch (err) {
     console.error("Unhandled Server Error:", err);
-    return c.json({ error: "Internal Server Error", message: err.message }, 500);
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ error: "Internal Server Error", message }, 500);
+  }
+});
+
+// 画像プロキシエンドポイント
+app.get("/api/stamps/:stampId/image", async (c) => {
+  try {
+    const stampId = c.req.param("stampId");
+    const accessToken = c.req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!accessToken) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // traQ の画像エンドポイントに アクセストークンを付けてリクエスト
+    const response = await fetch(`https://q.trap.jp/api/v3/stamps/${stampId}/image`, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+
+    if (!response.ok) {
+      return c.json({ error: "Failed to fetch image" }, response.status as any);
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    const contentType = response.headers.get("Content-Type") || "image/png";
+
+    return new Response(imageBuffer, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=3600"
+      }
+    });
+  } catch (err) {
+    console.error("Image proxy error:", err);
+    return c.json({ error: "Internal Server Error" }, 500);
   }
 });
 
