@@ -94,6 +94,9 @@ onUnmounted(() => {
 // スタンプ画像キャッシュ
 const stampImageCache = ref({})
 
+// 検索入力のdebounce処理用
+let inputTimeout = null
+
 // traQ APIから画像を取得してblob URLに変換
 const getStampImageUrl = async (stampId) => {
   if (stampImageCache.value[stampId]) {
@@ -120,38 +123,53 @@ const getStampImageUrl = async (stampId) => {
   return null
 }
 
+// 検索結果の画像を非同期で読み込む
+const loadSuggestionImages = async (suggestionsList) => {
+  const promises = suggestionsList.map(async (item) => {
+    if (!item.imageUrl) {
+      const imageUrl = await getStampImageUrl(item.i)
+      item.imageUrl = imageUrl
+    }
+  })
+  
+  await Promise.all(promises)
+}
+
 // 検索ロジック：入力があるたびに実行
-const handleInput = async (query, index) => {
+const handleInput = (query, index) => {
   activeIndex.value = index
   const q = (query || '').trim().toLowerCase()
+  
+  // 前の debounce をクリア
+  if (inputTimeout) clearTimeout(inputTimeout)
   
   if (!q) {
     suggestions.value = []
     return
   }
 
-  const matches = []
-  const data = allStamps.value // 1万件のデータ
-  
-  // 計算量 O(N) ですが、15件見つかった時点で終了させることで描画負荷を下げる
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].n.toLowerCase().includes(q)) {
-      matches.push(data[i])
+  // 入力が終わるまで 300ms 待機してから検索を実行
+  inputTimeout = setTimeout(async () => {
+    const matches = []
+    const data = allStamps.value // 1万件のデータ
+    
+    // 計算量 O(N) ですが、マッチ項目を見つけたら終了
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].n.toLowerCase().includes(q)) {
+        matches.push(data[i])
+      }
     }
-  }
-  
-  // 各マッチ項目に対して画像URLを取得
-  for (const match of matches) {
-    const imageUrl = await getStampImageUrl(match.i)
-    match.imageUrl = imageUrl
-  }
-  
-  suggestions.value = matches
-
-  const exactMatch = data.find(s => s.n === q)
-  if (exactMatch) {
-    pairs.value[index].stampId = exactMatch.i // ID(i)をセット
-  }
+    
+    suggestions.value = matches
+    
+    // 画像の読み込みを非同期で実行（検索結果の表示を待たない）
+    loadSuggestionImages(matches)
+    
+    const exactMatch = data.find(s => s.n === q)
+    if (exactMatch) {
+      pairs.value[index].stampId = exactMatch.i // ID(i)をセット
+    }
+  }, 300)
 }
 
 // スタンプを選択した時の処理
